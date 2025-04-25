@@ -180,3 +180,5 @@ terraform.tfvars
 
 .DS_STORE
 tf_generated
+
+app/bin

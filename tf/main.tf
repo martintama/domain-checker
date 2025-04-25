@@ -118,3 +118,44 @@ resource "aws_lambda_permission" "allow_cloudwatch" {
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.schedule.arn
 }
+
+// Create an SNS topic for notifications
+resource "aws_sns_topic" "domain_available_notification" {
+  name = "${local.function_name}-domain-available-notification"
+}
+
+// Create an SNS topic subscription for email delivery
+resource "aws_sns_topic_subscription" "email_subscription" {
+  topic_arn = aws_sns_topic.domain_available_notification.arn
+  protocol  = "email"
+  endpoint  = var.notification_email // Define this variable in your variables.tf
+}
+
+// Create a CloudWatch metric filter to detect the pattern
+resource "aws_cloudwatch_log_metric_filter" "domain_available_filter" {
+  name           = "${local.function_name}-domain-available-filter"
+  pattern        = "DomainAvailable"
+  log_group_name = aws_cloudwatch_log_group.log_group.name
+
+  metric_transformation {
+    name          = "DomainAvailableCount"
+    namespace     = "DomainMonitoring"
+    value         = "1"
+    default_value = "0"
+  }
+}
+
+// Create a CloudWatch alarm based on the metric - limiting notifications to once every 2 days
+resource "aws_cloudwatch_metric_alarm" "domain_available_alarm" {
+  alarm_name          = "${local.function_name}-domain-available-alarm"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "DomainAvailableCount"
+  namespace           = "DomainMonitoring"
+  period              = "172800"  // 60 seconds × 60 minutes × 24 hours × 2 days = 172,800 seconds
+  statistic           = "Sum"
+  threshold           = "1"
+  alarm_description   = "This alarm triggers when the domain becomes available (limited to once every 2 days)"
+  alarm_actions       = [aws_sns_topic.domain_available_notification.arn]
+  treat_missing_data  = "notBreaching"
+}
