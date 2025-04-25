@@ -1,14 +1,11 @@
 ## Example Makefile that apps would use
 
 # Application configuration
-APP_NAME := checker
+APP_NAME := domain-checker
+APP_NAME_LAMBDA := bootstrap
 
 # Go configuration
 GOPATH := $(shell go env GOPATH)
-GOOS := $(shell go env GOOS)
-GOARCH := $(shell go env GOARCH)
-GO_FILES := $(shell find . -type f -name "*.go" -not -path "./vendor/*" -not -path "./.git/*")
-GO_PACKAGES := $(shell go list ./... | grep -v /vendor/)
 
 # Directories
 BIN_DIR := ./bin
@@ -44,8 +41,15 @@ setup:
 build:
 	@echo "Building application..."
 	mkdir -p $(BIN_DIR)
-	go build -v -ldflags="-X main.Version=$(VERSION) -X main.Commit=$(COMMIT) -X main.BuildTime=$(BUILD_TIME)" -o $(BIN_DIR)/$(APP_NAME) main.go
+	go build -o $(BIN_DIR)/$(APP_NAME) main.go
 	@echo "Build complete: $(BIN_DIR)/$(APP_NAME)"
+
+# Build the application for LAMBDA
+buildlambda:
+	@echo "Building application for lambda (amd64, linux, filename: bootstrap)..."
+	mkdir -p $(BIN_DIR)
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 GOFLAGS=-trimpath go build -v -ldflags="-s -w" -o $(BIN_DIR)/$(APP_NAME_LAMBDA) main.go
+	@echo "Build complete: $(BIN_DIR)/$(APP_NAME_LAMBDA)"
 
 # Run linters
 lint:

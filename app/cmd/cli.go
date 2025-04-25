@@ -30,7 +30,7 @@ func RunWhois(domain string, verbose bool) (internal.DomainStatus, error) {
 		fmt.Println("Error checking domain")
 		return internal.DomainStatusUnknown, err
 	}
-	fmt.Println(result)
+	fmt.Printf("%s: %s\n", domain, result)
 
 	return result, nil
 }

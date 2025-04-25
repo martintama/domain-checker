@@ -32,5 +32,6 @@ func HandleRequest(ctx context.Context, event map[string]string) (string, error)
 		return internal.DomainStatusUnknown, err
 	}
 
-	return string(result), nil
+	r := fmt.Sprintf("%s: %s", domain, result)
+	return r, nil
 }
