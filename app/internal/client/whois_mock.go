@@ -1,6 +1,10 @@
-package internal
+package client
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/martintama/domain-checker/internal/types"
+)
 
 type WhoisMock struct{}
 
@@ -14,17 +18,17 @@ func NewWhoisMock() WhoisClient {
 	return &WhoisMock{}
 }
 
-func (m WhoisMock) CheckDomainAvailability(domain string, verbose bool) (DomainStatus, error) {
+func (m WhoisMock) CheckDomainAvailability(domain string, verbose bool) (types.DomainStatus, error) {
 	if verbose {
 		fmt.Printf("Checking domain availability for: %s", domain)
 	}
 
 	switch domain {
 	case domainAvailable:
-		return DomainStatusAvailable, nil
+		return types.DomainStatusAvailable, nil
 	case domainNotAvailable:
-		return DomainStatusUnavailable, nil
+		return types.DomainStatusUnavailable, nil
 	}
 
-	return DomainStatusUnknown, fmt.Errorf("error getting domain information")
+	return types.DomainStatusUnknown, fmt.Errorf("error getting domain information")
 }

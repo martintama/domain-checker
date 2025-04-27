@@ -1,24 +1,31 @@
-package internal
+package client
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/likexian/whois"
+	"github.com/martintama/domain-checker/internal/logger"
+	"github.com/martintama/domain-checker/internal/types"
 )
 
-// DomainStatus represents the availability status of a domain
-type DomainStatus string
-
-const (
-	// DomainStatusAvailable indicates the domain is available for registration
-	DomainStatusAvailable DomainStatus = "DomainAvailable"
-	// DomainStatusUnavailable indicates the domain is already registered
-	DomainStatusUnavailable = "DomainUnavailable"
-	// DomainStatusUnknown indicates there was an error and domain status cannot be determined
-	DomainStatusUnknown = ""
-)
+// patterns that indicate a domain is available
+var availabilityPatterns = []string{
+	"(?i)No match",
+	"(?i)NOT FOUND",
+	"(?i)Not fo",
+	"(?i)No Data Fou",
+	"(?i)has not been regi",
+	"(?i)No entri",
+	"(?i)Domain not found",
+	"(?i)Status: free",
+	"(?i)Status: AVAILABLE",
+	"(?i)No Object Found",
+	"(?i)Domain Status: free",
+	"(?i)The domain has not been registered",
+}
 
 // Map of TLDs to their authoritative WHOIS servers
 var tldServerMap = map[string]string{
@@ -35,7 +42,7 @@ var tldServerMap = map[string]string{
 
 type WhoisClient interface {
 	// CheckDomainAvailability queries the appropriate WHOIS server for the given TLD
-	CheckDomainAvailability(domain string, verbose bool) (DomainStatus, error)
+	CheckDomainAvailability(domain string, verbose bool) (types.DomainStatus, error)
 }
 
 type DefaultWhoisClient struct {
@@ -60,17 +67,15 @@ func extractTld(domain string) (string, error) {
 	return tld, nil
 }
 
-func (c *DefaultWhoisClient) CheckDomainAvailability(domain string, verbose bool) (DomainStatus, error) {
+func (c *DefaultWhoisClient) CheckDomainAvailability(domain string, verbose bool) (types.DomainStatus, error) {
 	var raw string
 	var err error
 
-	if verbose {
-		fmt.Printf("Checking availability of %s\n", domain)
-	}
+	logger.WithField("domain", domain).Debugf("Checking availability of %s\n", domain)
 
 	tld, err := extractTld(domain)
 	if err != nil {
-		return DomainStatusUnknown, err
+		return types.DomainStatusUnknown, err
 	}
 
 	whoisClient := whois.NewClient()
@@ -92,7 +97,7 @@ func (c *DefaultWhoisClient) CheckDomainAvailability(domain string, verbose bool
 
 	if err != nil {
 		fmt.Printf("Error querying whois for %s: %s\n", domain, err)
-		return DomainStatusUnknown, err
+		return types.DomainStatusUnknown, err
 	}
 
 	if verbose {
@@ -102,8 +107,44 @@ func (c *DefaultWhoisClient) CheckDomainAvailability(domain string, verbose bool
 	result, err := analyzeResult(raw, verbose)
 	if err != nil {
 		fmt.Printf("Error analyzing lookup result for %s: %s\n", domain, err)
-		return DomainStatusUnknown, err
+		return types.DomainStatusUnknown, err
 	}
 
 	return result, nil
+}
+
+func prepareRegexPatterns() ([]*regexp.Regexp, error) {
+	// Compile all regex patterns once
+	var regexPatterns []*regexp.Regexp
+	for _, pattern := range availabilityPatterns {
+		regex, err := regexp.Compile(pattern)
+		if err != nil {
+			fmt.Printf("Error compiling regex pattern '%s': %v\n", pattern, err)
+			return nil, err
+		}
+		regexPatterns = append(regexPatterns, regex)
+	}
+
+	return regexPatterns, nil
+}
+
+func analyzeResult(lookupResult string, verbose bool) (types.DomainStatus, error) {
+
+	patterns, err := prepareRegexPatterns()
+	if err != nil {
+		return types.DomainStatusUnknown, err
+	}
+
+	// Check if any availability pattern matches the whois response
+	for _, pattern := range patterns {
+		if pattern.MatchString(lookupResult) {
+			if verbose {
+				fmt.Printf("Found match for string: %v\n", pattern.String())
+			}
+
+			return types.DomainStatusAvailable, nil
+		}
+	}
+
+	return types.DomainStatusUnavailable, nil
 }

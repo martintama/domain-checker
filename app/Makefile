@@ -16,7 +16,7 @@ GOLANGCI_LINT := $(GOPATH)/bin/golangci-lint
 GOTESTSUM := $(GOPATH)/bin/gotestsum
 
 # Main targets
-.PHONY: build clean lint setup unittest
+.PHONY: build clean lint setup test unittest
 
 # Default target runs setup, lint, test and build
 all: setup lint unittest build
@@ -44,6 +44,9 @@ build:
 	go build -o $(BIN_DIR)/$(APP_NAME) main.go
 	@echo "Build complete: $(BIN_DIR)/$(APP_NAME)"
 
+# Test the application
+test: unittest
+	
 # Build the application for LAMBDA
 buildlambda:
 	@echo "Building application for lambda (amd64, linux, filename: bootstrap)..."
@@ -81,5 +84,6 @@ help:
 	@echo "  build            : Build the application"
 	@echo "  lint             : Run linters"
 	@echo "  unittest         : Run unit tests"
+	@echo "  test             : Run all test suites (currently only unittest)"
 	@echo "  clean            : Clean build artifacts"
 	@echo "  help             : Show this help message"

@@ -3,21 +3,21 @@ package cmd
 import (
 	"testing"
 
-	"github.com/martintama/domain-checker/internal"
+	"github.com/martintama/domain-checker/internal/types"
 )
 
 func TestWhoIs(t *testing.T) {
 	tests := []struct {
 		name           string
 		domain         string
-		expectedResult internal.DomainStatus
+		expectedResult types.DomainStatus
 		expectError    bool
 		expectedError  error
 	}{
 		{
 			name:           "Existing domain",
 			domain:         "google.com",
-			expectedResult: internal.DomainStatusUnavailable,
+			expectedResult: types.DomainStatusUnavailable,
 			expectError:    false,
 			expectedError:  nil,
 		},

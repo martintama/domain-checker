@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/martintama/domain-checker/internal"
+	"github.com/martintama/domain-checker/internal/client"
+	"github.com/martintama/domain-checker/internal/types"
 	"github.com/spf13/cobra"
 )
 
@@ -21,14 +22,14 @@ var WhoisCmd = &cobra.Command{
 	},
 }
 
-func RunWhois(domain string, verbose bool) (internal.DomainStatus, error) {
-	w := internal.NewWhoIsClient()
+func RunWhois(domain string, verbose bool) (types.DomainStatus, error) {
+	w := client.NewWhoIsClient()
 	w.Timeout = 2 * time.Second
 
 	result, err := w.CheckDomainAvailability(domain, verbose)
 	if err != nil {
 		fmt.Println("Error checking domain")
-		return internal.DomainStatusUnknown, err
+		return types.DomainStatusUnknown, err
 	}
 	fmt.Printf("%s: %s\n", domain, result)
 

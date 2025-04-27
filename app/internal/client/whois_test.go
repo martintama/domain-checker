@@ -1,10 +1,47 @@
-package internal
+package client
 
 import (
+	"embed"
 	"testing"
 
+	"github.com/martintama/domain-checker/internal/types"
 	"github.com/stretchr/testify/assert"
 )
+
+//go:embed testdata/*.txt
+var testDataFiles embed.FS
+
+func TestAvailability(t *testing.T) {
+	tests := []struct {
+		name     string
+		datafile string
+		expected types.DomainStatus
+	}{
+		{
+			name:     "1-not available",
+			datafile: "testdata/1-not-available.txt",
+			expected: types.DomainStatusUnavailable,
+		},
+		{
+			name:     "2-available",
+			datafile: "testdata/2-available.txt",
+			expected: types.DomainStatusAvailable,
+		},
+	}
+
+	for _, ts := range tests {
+		t.Run(ts.name, func(t *testing.T) {
+			r, err := testDataFiles.ReadFile(ts.datafile)
+			if err != nil {
+				t.Errorf("Error testing %s: %v", ts.name, err)
+			}
+
+			status, _ := analyzeResult(string(r), false)
+
+			assert.Equal(t, ts.expected, status)
+		})
+	}
+}
 
 func TestExtractTld(t *testing.T) {
 	tests := []struct {
@@ -55,26 +92,26 @@ func TestCheckDomain(t *testing.T) {
 	tests := []struct {
 		name                   string
 		domain                 string
-		expectedStatus         DomainStatus
+		expectedStatus         types.DomainStatus
 		expectError            bool
 		expectedErrorSubstring string
 	}{
 		{
 			name:           "available",
 			domain:         "available.com",
-			expectedStatus: DomainStatusAvailable,
+			expectedStatus: types.DomainStatusAvailable,
 			expectError:    false,
 		},
 		{
 			name:           "not-available",
 			domain:         "notavailable.com",
-			expectedStatus: DomainStatusUnavailable,
+			expectedStatus: types.DomainStatusUnavailable,
 			expectError:    false,
 		},
 		{
 			name:                   "invalid",
 			domain:                 "test",
-			expectedStatus:         DomainStatusUnknown,
+			expectedStatus:         types.DomainStatusUnknown,
 			expectError:            true,
 			expectedErrorSubstring: "error getting domain information",
 		},

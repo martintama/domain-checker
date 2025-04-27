@@ -3,13 +3,15 @@ package main
 import (
 	"os"
 	"testing"
+
+	"github.com/martintama/domain-checker/internal/types"
 )
 
 func TestMode(t *testing.T) {
 	tests := []struct {
 		name         string
 		envSetup     func()
-		expectedMode RunMode
+		expectedMode types.RunMode
 		envTeardown  func()
 	}{
 		{
@@ -17,7 +19,7 @@ func TestMode(t *testing.T) {
 			envSetup: func() {
 				os.Setenv("AWS_LAMBDA_FUNCTION_NAME", "test-function")
 			},
-			expectedMode: ModeLambda,
+			expectedMode: types.RunModeLambda,
 			envTeardown: func() {
 				os.Unsetenv("AWS_LAMBDA_FUNCTION_NAME")
 			},
@@ -25,7 +27,7 @@ func TestMode(t *testing.T) {
 		{
 			name:         "CLI mode",
 			envSetup:     func() {},
-			expectedMode: ModeCLI,
+			expectedMode: types.RunModeCLI,
 			envTeardown:  func() {},
 		},
 	}
