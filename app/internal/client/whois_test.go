@@ -4,6 +4,7 @@ import (
 	"embed"
 	"testing"
 
+	"github.com/martintama/domain-checker/internal/logger"
 	"github.com/martintama/domain-checker/internal/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -36,7 +37,7 @@ func TestAvailability(t *testing.T) {
 				t.Errorf("Error testing %s: %v", ts.name, err)
 			}
 
-			status, _ := analyzeResult(string(r), false)
+			status, _ := analyzeResult(string(r), logger.GetLogger())
 
 			assert.Equal(t, ts.expected, status)
 		})

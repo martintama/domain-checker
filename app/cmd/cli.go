@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/martintama/domain-checker/internal/client"
+	"github.com/martintama/domain-checker/internal/logger"
 	"github.com/martintama/domain-checker/internal/types"
 	"github.com/spf13/cobra"
 )
@@ -23,10 +24,15 @@ var WhoisCmd = &cobra.Command{
 }
 
 func RunWhois(domain string, verbose bool) (types.DomainStatus, error) {
+	if verbose {
+		logger.SetLogLevel(logger.LogLevelDebug)
+	}
+	log := logger.GetLogger()
+
 	w := client.NewWhoIsClient()
 	w.Timeout = 2 * time.Second
 
-	result, err := w.CheckDomainAvailability(domain, verbose)
+	result, err := w.CheckDomainAvailability(domain, log)
 	if err != nil {
 		fmt.Println("Error checking domain")
 		return types.DomainStatusUnknown, err

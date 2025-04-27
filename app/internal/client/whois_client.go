@@ -67,11 +67,11 @@ func extractTld(domain string) (string, error) {
 	return tld, nil
 }
 
-func (c *DefaultWhoisClient) CheckDomainAvailability(domain string, verbose bool) (types.DomainStatus, error) {
+func (c *DefaultWhoisClient) CheckDomainAvailability(domain string, log *logger.AppLogger) (types.DomainStatus, error) {
 	var raw string
 	var err error
 
-	logger.WithField("domain", domain).Debugf("Checking availability of %s\n", domain)
+	log.Debugf("Checking availability of %s\n", domain)
 
 	tld, err := extractTld(domain)
 	if err != nil {
@@ -84,9 +84,8 @@ func (c *DefaultWhoisClient) CheckDomainAvailability(domain string, verbose bool
 	// Check if we have a specific server for this TLD
 	server, found := tldServerMap[tld]
 
-	if verbose {
-		fmt.Printf("Using server: %s\n", server)
-	}
+	log.Debugf("Using server: %s\n", server)
+
 	if found {
 		// Query the specific server for this TLD
 		raw, err = whoisClient.Whois(domain, server)
@@ -96,17 +95,15 @@ func (c *DefaultWhoisClient) CheckDomainAvailability(domain string, verbose bool
 	}
 
 	if err != nil {
-		fmt.Printf("Error querying whois for %s: %s\n", domain, err)
+		log.Errorf("Error querying whois for %s: %s\n", domain, err)
 		return types.DomainStatusUnknown, err
 	}
 
-	if verbose {
-		fmt.Println(raw)
-	}
+	log.Debug(raw)
 
-	result, err := analyzeResult(raw, verbose)
+	result, err := analyzeResult(raw, log)
 	if err != nil {
-		fmt.Printf("Error analyzing lookup result for %s: %s\n", domain, err)
+		log.Errorf("Error analyzing lookup result for %s: %s\n", domain, err)
 		return types.DomainStatusUnknown, err
 	}
 
@@ -128,7 +125,7 @@ func prepareRegexPatterns() ([]*regexp.Regexp, error) {
 	return regexPatterns, nil
 }
 
-func analyzeResult(lookupResult string, verbose bool) (types.DomainStatus, error) {
+func analyzeResult(lookupResult string, log *logger.AppLogger) (types.DomainStatus, error) {
 
 	patterns, err := prepareRegexPatterns()
 	if err != nil {
@@ -138,9 +135,7 @@ func analyzeResult(lookupResult string, verbose bool) (types.DomainStatus, error
 	// Check if any availability pattern matches the whois response
 	for _, pattern := range patterns {
 		if pattern.MatchString(lookupResult) {
-			if verbose {
-				fmt.Printf("Found match for string: %v\n", pattern.String())
-			}
+			log.Debugf("Found match for string: %v\n", pattern.String())
 
 			return types.DomainStatusAvailable, nil
 		}

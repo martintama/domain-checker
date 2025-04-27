@@ -21,16 +21,17 @@ func DetermineRunMode() types.RunMode {
 }
 
 func init() {
-	// Configure the logger early
-	logger.Initialize(logger.Config{
-		LogLevel: os.Getenv("LOG_LEVEL"),
-		RunMode:  types.RunModeLambda,
-	})
+
 }
 
 func main() {
 
 	runMode := DetermineRunMode()
+
+	logger.Initialize(logger.Config{
+		LogLevel: logger.ParseLogLevel(os.Getenv("LOG_LEVEL")),
+		RunMode:  runMode,
+	})
 
 	switch runMode {
 	case types.RunModeLambda:

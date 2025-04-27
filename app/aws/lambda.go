@@ -3,7 +3,6 @@ package aws
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/martintama/domain-checker/internal/client"
@@ -11,30 +10,31 @@ import (
 	"github.com/martintama/domain-checker/internal/types"
 )
 
+const (
+	domainKey = "domain"
+)
+
 // Lambda handler
 func HandleRequest(ctx context.Context, event map[string]string) (string, error) {
-
-	verbose := false
-	if os.Getenv("APP_LOG_LEVEL") != "" {
-		verbose = true
-	}
-
 	// Extract input from Lambda event
-	d, ok := event["domain"]
+	domain, ok := event[domainKey]
 	if !ok {
-		return "", fmt.Errorf("default input missing: domain")
+		return "", fmt.Errorf("default input missing: %s", domainKey)
 	}
+
+	// Create request-scoped logger
+	reqLogger := logger.WithField(domainKey, domain)
 
 	w := client.NewWhoIsClient()
-
 	w.Timeout = 2 * time.Second
 
-	result, err := w.CheckDomainAvailability(d, verbose)
+	result, err := w.CheckDomainAvailability(domain, reqLogger)
 	if err != nil {
-		logger.WithField("domain", d).Error("error checking domain")
+		reqLogger.Error("error checking domain availability")
 		return types.DomainStatusUnknown, err
 	}
 
-	r := fmt.Sprintf("%s: %s", d, result)
+	r := fmt.Sprintf("%s: %s", domain, result)
+	reqLogger.Info(r)
 	return r, nil
 }
