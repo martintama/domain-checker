@@ -1,0 +1,4 @@
+bucket       = "<domain name>"
+key          = "domain-checker/terraform.tfstate"
+encrypt      = true
+use_lockfile = true
