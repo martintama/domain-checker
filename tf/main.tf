@@ -71,7 +71,6 @@ data "archive_file" "function_archive" {
   source_file = local.binary_path
   output_path = local.archive_path
   
-  // This is the critical change - rename the file to "bootstrap" within the ZIP
   output_file_mode = "0755"
 }
 
@@ -91,6 +90,13 @@ resource "aws_lambda_function" "function" {
   runtime = "provided.al2"
 }
 
+resource "aws_lambda_permission" "allow_cloudwatch" {
+  statement_id  = "AllowExecutionFromCloudWatch"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.function.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.schedule.arn
+}
 
 // create log group in cloudwatch to gather logs of our lambda function
 resource "aws_cloudwatch_log_group" "log_group" {
@@ -102,33 +108,17 @@ resource "aws_cloudwatch_log_group" "log_group" {
 resource "aws_cloudwatch_event_rule" "schedule" {
   name                = "${local.function_name}-schedule"
   description         = "Schedule for ${local.function_name} Lambda function"
-  schedule_expression = "cron(0 0/12 * * ? *)"
+  schedule_expression = "cron(0 * * * ? *)"
 }
 
 resource "aws_cloudwatch_event_target" "lambda_target" {
   rule      = aws_cloudwatch_event_rule.schedule.name
   target_id = "${local.function_name}-target"
   arn       = aws_lambda_function.function.arn
-}
 
-resource "aws_lambda_permission" "allow_cloudwatch" {
-  statement_id  = "AllowExecutionFromCloudWatch"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.function.function_name
-  principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.schedule.arn
-}
-
-// Create an SNS topic for notifications
-resource "aws_sns_topic" "domain_available_notification" {
-  name = "${local.function_name}-domain-available-notification"
-}
-
-// Create an SNS topic subscription for email delivery
-resource "aws_sns_topic_subscription" "email_subscription" {
-  topic_arn = aws_sns_topic.domain_available_notification.arn
-  protocol  = "email"
-  endpoint  = var.notification_email // Define this variable in your variables.tf
+  input = jsonencode({
+    domain = var.domain
+  })
 }
 
 // Create a CloudWatch metric filter to detect the pattern
@@ -145,17 +135,29 @@ resource "aws_cloudwatch_log_metric_filter" "domain_available_filter" {
   }
 }
 
-// Create a CloudWatch alarm based on the metric - limiting notifications to once every 2 days
+// Create a CloudWatch alarm for immediate notification
 resource "aws_cloudwatch_metric_alarm" "domain_available_alarm" {
-  alarm_name          = "${local.function_name}-domain-available-alarm"
+  alarm_name          = local.alarm_name // We cannot customize the email, but this ends up in the subject line
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = "1"
   metric_name         = "DomainAvailableCount"
   namespace           = "DomainMonitoring"
-  period              = "172800"  // 60 seconds × 60 minutes × 24 hours × 2 days = 172,800 seconds
+  period              = "60"  // Check every minute for faster notification
   statistic           = "Sum"
   threshold           = "1"
-  alarm_description   = "This alarm triggers when the domain becomes available (limited to once every 2 days)"
+  alarm_description   = "This alarm triggers when the domain becomes available"
   alarm_actions       = [aws_sns_topic.domain_available_notification.arn]
   treat_missing_data  = "notBreaching"
+}
+
+// Create an SNS topic for notifications
+resource "aws_sns_topic" "domain_available_notification" {
+  name = "${local.function_name}-domain-available-notification"
+}
+
+// Create an SNS topic subscription for email delivery
+resource "aws_sns_topic_subscription" "email_subscription" {
+  topic_arn = aws_sns_topic.domain_available_notification.arn
+  protocol  = "email"
+  endpoint  = var.notification_email
 }
