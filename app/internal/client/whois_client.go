@@ -29,15 +29,9 @@ var availabilityPatterns = []string{
 
 // Map of TLDs to their authoritative WHOIS servers
 var tldServerMap = map[string]string{
-	".com":    "whois.verisign-grs.com",
-	".net":    "whois.verisign-grs.com",
-	".org":    "whois.pir.org",
-	".info":   "whois.afilias.net",
-	".com.ar": "whois.nic.ar",
-	".ar":     "whois.nic.ar",
-	".co.jp":  "whois.jprs.jp",
-	".jp":     "whois.jprs.jp",
-	// Add more as needed
+	".com":   "whois.verisign-grs.com",
+	".co.jp": "whois.jprs.jp",
+	// Add more as needed, but be mindful of editing the availability patterns too.
 }
 
 type WhoisClient interface {

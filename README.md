@@ -14,6 +14,9 @@ Currently it sends an email every time it runs (i.e. hourly) if the domain is fo
 
 On the other hand, worst case scenario is that we get 8-10 email while we sleep, but we won't miss the news!
 
+> [!IMPORTANT]
+> This tool has only been tested with .com and .co.jp domains!
+
 ## How to run this locally?
 
 ### App
