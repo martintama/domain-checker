@@ -41,10 +41,14 @@ Then run it with:
 
 ### Terraform code
 
+> [!INFORMATION]
+> Minimum Terraform version required: 1.11.4
+
 Terraform code is located in the `tf` directory.
 
 #### Prerequisites
 
+##### AWS
 Terraform configuration expects a local AWS SSO session named `tf-admin` is configured. Set this up with:
 
 `aws configure sso`
@@ -53,6 +57,16 @@ Follow the instructions. When asked about the **Session name**, enter `tf-admin`
 
 > [!IMPORTANT]
 > Terraform code needs to create new IAM roles for Lambda functions. Thus, AWS `PowerUserAccess` role is insufficient - you'll need administrative privileges.
+
+##### Statefile
+Terraform is configured to store the state in a S3 bucket. To do so, rename the `tf/backend-config.hcl.template` file to `tf/backend-config.hcl` (remove the `.template` suffix), and point to a bucket that already exists.
+
+The role for AWS must have the following IAM permissions on the bucket:
+- `s3:ListBucket` on `arn:aws:s3:::mybucket`. At a minimum, this must be able to list the path where the state is stored.
+- `s3:GetObject` on `arn:aws:s3:::mybucket/path/to/my/key` and `arn:aws:s3:::mybucket/path/to/my/key.tflock` (lockfile)
+- `s3:PutObject` on `arn:aws:s3:::mybucket/path/to/my/key` and `arn:aws:s3:::mybucket/path/to/my/key.tflock` (lockfile)
+
+Please refer to the S3 backend [documentation](https://developer.hashicorp.com/terraform/language/backend/s3#s3-bucket-permissions) for more details.
 
 #### Deployment
 
