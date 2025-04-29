@@ -41,7 +41,7 @@ Then run it with:
 
 ### Terraform code
 
-> [!INFORMATION]
+> [!NOTE]
 > Minimum Terraform version required: 1.11.4
 
 Terraform code is located in the `tf` directory.
@@ -55,7 +55,7 @@ Terraform configuration expects a local AWS SSO session named `tf-admin` is conf
 
 Follow the instructions. When asked about the **Session name**, enter `tf-admin` (Recommended). If you want to use a different name, please ensure scripts and files are changed accordingly.
 
-> [!NOTE]
+> [!IMPORTANT]
 > Terraform code needs to create new IAM roles for Lambda functions. Thus, AWS `PowerUserAccess` role is insufficient - you'll need administrative privileges.
 
 ##### Statefile
