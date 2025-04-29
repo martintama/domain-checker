@@ -66,11 +66,11 @@ resource "null_resource" "function_binary" {
 data "archive_file" "function_archive" {
   depends_on = [null_resource.function_binary]
 
-  type        = "zip"
+  type = "zip"
   // For AWS Lambda with provided.al2 runtime, the binary must be named "bootstrap"
   source_file = local.binary_path
   output_path = local.archive_path
-  
+
   output_file_mode = "0755"
 }
 
@@ -142,7 +142,7 @@ resource "aws_cloudwatch_metric_alarm" "domain_available_alarm" {
   evaluation_periods  = "1"
   metric_name         = "DomainAvailableCount"
   namespace           = "DomainMonitoring"
-  period              = "60"  // Check every minute for faster notification
+  period              = "60" // Check every minute for faster notification
   statistic           = "Sum"
   threshold           = "1"
   alarm_description   = "This alarm triggers when the domain becomes available"

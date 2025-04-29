@@ -10,7 +10,7 @@ login:
 	@echo "source ./set-aws.sh"
 
 init:
-	terraform init
+	terraform init -backend-config=backend-config.hcl
 
 plan:
 	terraform plan -out=plan.out
