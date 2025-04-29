@@ -7,8 +7,8 @@ Checks are made using a simple whois lookup, trying to stay under the radar, as 
 ## Components
 
 This is composed of two parts:
-- App: Written in go, can be run locally to confirm the domain in question is effectively detected as not available to start with.
-- TF code: Builds and deploys the app to an AWS Lambda function, that is configured to run hourly and log the results to Clodwatch Logs. From there, a Cloudwatch Metric Filter looks for the text "DomainAvailable". If found, it sends an email to the pre-configured email.
+- **App**: Written in go, can be run locally to confirm the domain in question is effectively detected as not available to start with.
+- **TF code**: Builds and deploys the app to an AWS Lambda function, that is configured to run hourly and log the results to Clodwatch Logs. From there, a Cloudwatch Metric Filter looks for the text "DomainAvailable". If found, it sends an email to the pre-configured email.
 
 Currently it sends an email every time it runs (i.e. hourly) if the domain is found available. It would have been better to have a "cooldown period", and only send emails every 2 days, for example. Unfortunately, it would have meant adding more innecessary components to the mix, increasing the overall solution complexity. 
 
@@ -55,7 +55,7 @@ Terraform configuration expects a local AWS SSO session named `tf-admin` is conf
 
 Follow the instructions. When asked about the **Session name**, enter `tf-admin` (Recommended). If you want to use a different name, please ensure scripts and files are changed accordingly.
 
-> [!IMPORTANT]
+> [!NOTE]
 > Terraform code needs to create new IAM roles for Lambda functions. Thus, AWS `PowerUserAccess` role is insufficient - you'll need administrative privileges.
 
 ##### Statefile
